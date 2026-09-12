@@ -125,7 +125,7 @@ def run_all_models(db_path: str) -> dict[str, dict[str, float]]:
 
 
 if __name__ == "__main__":
-    revenue_by_model = run_all_models("demo.db")
+    revenue_by_model = run_all_models("db/demo.db")
     for model in MODELS:
         print(f"\n=== {model} ===")
         for channel, revenue in sorted(revenue_by_model[model].items(), key=lambda x: -x[1]):

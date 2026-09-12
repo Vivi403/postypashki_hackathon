@@ -8,8 +8,8 @@
 Вход: base.xlsx (795 строк, 04.08–10.09.2026)
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 LAST_FULL_DAY = pd.Timestamp(
     "2026-09-09"
@@ -49,16 +49,16 @@ def backtest(y: np.ndarray, dates: pd.Series, start: int = 14) -> pd.DataFrame:
         seasonal7 = y[t - 7] if t >= 7 else np.nan
         ma7 = y[max(0, t - 7) : t].mean()
         mask = weekday[:t] == weekday[t]
-        wd_profile = y[:t][mask].mean() if mask.sum() > 0 else y[:t].mean()
+        wd_profile = y[:t][mask].mean() if mask.sum() > 0 else y[:t].mean() # type: ignore
         rows.append(
-            dict(
-                date=dates[t],
-                actual=y[t],
-                naive=naive,
-                seasonal7=seasonal7,
-                ma7=ma7,
-                wd_profile=wd_profile,
-            )
+            {
+                "date": dates[t],
+                "actual": y[t],
+                "naive": naive,
+                "seasonal7": seasonal7,
+                "ma7": ma7,
+                "wd_profile": wd_profile,
+            }
         )
     return pd.DataFrame(rows)
 
@@ -82,12 +82,12 @@ def forecast_uncertainty(y: np.ndarray, horizons=(1, 7, 14, 30)) -> pd.DataFrame
         mean_h = mean_d * h
         ci95 = 1.96 * std_d * np.sqrt(h)
         rows.append(
-            dict(
-                horizon_days=h,
-                forecast_sum=round(mean_h),
-                ci95_width=round(ci95),
-                ci95_pct_of_forecast=round(ci95 / mean_h * 100, 1),
-            )
+            {
+                "horizon_days": h,
+                "forecast_sum": round(mean_h),
+                "ci95_width": round(ci95),
+                "ci95_pct_of_forecast": round(ci95 / mean_h * 100, 1),
+            }
         )
     return pd.DataFrame(rows)
 
@@ -100,10 +100,10 @@ if __name__ == "__main__":
         f"Дней в ряду: {len(daily)} ({daily['date'].min().date()} — {daily['date'].max().date()})"
     )
     print(
-        f"mean={y.mean():.2f}  std={y.std(ddof=1):.2f}  CV={y.std(ddof=1)/y.mean():.2f}\n"
+        f"mean={y.mean():.2f}  std={y.std(ddof=1):.2f}  CV={y.std(ddof=1)/y.mean():.2f}\n" # type: ignore
     )
 
-    bt = backtest(y, daily["date"])
+    bt = backtest(y, daily["date"]) # type: ignore
     print("Backtest (one-step-ahead, walk-forward):")
     for m in ["naive", "seasonal7", "ma7", "wd_profile"]:
         print(
@@ -112,4 +112,4 @@ if __name__ == "__main__":
         )
 
     print("\nШирина доверительного интервала по горизонтам:")
-    print(forecast_uncertainty(y).to_string(index=False))
+    print(forecast_uncertainty(y).to_string(index=False)) # type: ignore
