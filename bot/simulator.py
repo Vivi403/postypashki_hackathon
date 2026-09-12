@@ -68,11 +68,11 @@ def build_schema(conn: sqlite3.Connection, schema_path: str):
 
 def load_real_payments(conn: sqlite3.Connection, base_xlsx_path: str) -> pd.DataFrame:
     """Загружает реальные даные из base.xlsx.
-    
+
     Эти данные предоставлены в самом хакатоне.
-    Все 795 строк реальные выданные данные. 
+    Все 795 строк реальные выданные данные.
     Загружает данные в базу данных.
-    
+
     Args:
         conn (sqlite3.Connection): подключение к базе данных
         base_xlsx_path (str): путь к реальным данным
@@ -210,8 +210,9 @@ def simulate_touches(conn: sqlite3.Connection, payments_df: pd.DataFrame):
 def run(
     db_path: str = "demo.db",
     base_xlsx_path: str = "data/base.xlsx",
-    schema_path: str = "bd/schema_sqlite.sql") -> str:
-    """Запск сиулятора бота.
+    schema_path: str = "bd/schema_sqlite.sql",
+) -> str:
+    """Запуск симулятора бота.
 
     Args:
         db_path (str, optional): Путь к базе данных. Defaults to "demo.db".
