@@ -57,11 +57,28 @@ TOUCH_COUNT_WEIGHTS = {1: 0.55, 2: 0.30, 3: 0.15}  # сколько касани
 
 
 def build_schema(conn: sqlite3.Connection, schema_path: str):
+    """Создаёт схему в базе данных.
+
+    Args:
+        conn (sqlite3.Connection): подключение к базе данных
+        schema_path (str): путь к схеме базы данных
+    """
     conn.executescript(Path(schema_path).read_text(encoding="utf-8"))
 
 
 def load_real_payments(conn: sqlite3.Connection, base_xlsx_path: str) -> pd.DataFrame:
-    """Грузит РЕАЛЬНЫЕ продажи как есть — 795 строк base.xlsx."""
+    """Загружает реальные даные из base.xlsx.
+    
+    Эти данные предоставлены в самом хакатоне.
+    Все 795 строк реальные выданные данные. 
+    Загружает данные в базу данных.
+    
+    Args:
+        conn (sqlite3.Connection): подключение к базе данных
+        base_xlsx_path (str): путь к реальным данным
+    Returns:
+        pd.DataFrame: Данны в DataFrame
+    """
     df = pd.read_excel(base_xlsx_path)
     df.columns = ["student_id", "amount", "course", "ts"]
     df["ts"] = pd.to_datetime(df["ts"])
@@ -107,6 +124,14 @@ def seed_channels(conn: sqlite3.Connection):
 
 
 def hashed_id(raw_id: str) -> str:
+    """Хэшер для айдишников.
+
+    Args:
+        raw_id (str): сырой id
+
+    Returns:
+        str: хэш
+    """
     return hashlib.sha256(f"demo-salt:{raw_id}".encode()).hexdigest()
 
 
@@ -145,7 +170,7 @@ def simulate_touches(conn: sqlite3.Connection, payments_df: pd.DataFrame):
             channels, k=n_touches
         )  # разные каналы, не повтор одного
         lags = sorted(
-            rng.sample(range(0, ATTRIBUTION_WINDOW_DAYS + 1), k=n_touches), reverse=True
+            rng.sample(range(ATTRIBUTION_WINDOW_DAYS + 1), k=n_touches), reverse=True
         )
 
         h_id = hashed_id(student_id)
@@ -185,8 +210,17 @@ def simulate_touches(conn: sqlite3.Connection, payments_df: pd.DataFrame):
 def run(
     db_path: str = "demo.db",
     base_xlsx_path: str = "data/base.xlsx",
-    schema_path: str = "bd/schema_sqlite.sql",
-):
+    schema_path: str = "bd/schema_sqlite.sql") -> str:
+    """Запск сиулятора бота.
+
+    Args:
+        db_path (str, optional): Путь к базе данных. Defaults to "demo.db".
+        base_xlsx_path (str, optional): Путь к exel базе данных. Defaults to "data/base.xlsx".
+        schema_path (str, optional): Путь к схеме базы даных. Defaults to "bd/schema_sqlite.sql".
+
+    Returns:
+        str: Путь к базе данных
+    """
     Path(db_path).unlink(missing_ok=True)
     conn = sqlite3.connect(db_path)
     build_schema(conn, schema_path)
@@ -195,12 +229,12 @@ def run(
     seed_channels(conn)
     n_touched, n_organic = simulate_touches(conn, payments_df)
 
-    print(f"[simulator] Реальных строк продаж загружено: {len(payments_df)}")
+    print(f"Реальных строк продаж загружено: {len(payments_df)}")
     print(
-        f"[simulator] Синтетических касаний сгенерировано: {n_touched} "
+        f"Синтетических касаний сгенерировано: {n_touched} "
         f"(на {len(payments_df.groupby(['student_id','ts']))-n_organic} заказов с рекламой)"
     )
-    print(f"[simulator] Заказов без касаний (органика): {n_organic}")
+    print(f"Заказов без касаний (органика): {n_organic}")
     conn.close()
     return db_path
 
